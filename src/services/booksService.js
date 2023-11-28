@@ -1,20 +1,13 @@
 // services/booksService.js
 
-const admin = require('firebase-admin');
+const db = require("../../firebase");
+const BookDto = require("../dtos/bookDTO");
 
-const serviceAccount = require('../path/to/your/firebase-credentials.json');
-const BookDto = require('../dtos/bookDTO');
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
-  // otras configuraciones...
-});
-
-const db = admin.firestore();
 const booksCollection = db.collection('books');
 
 const handleError = (error) => {
   console.error(error);
-  throw new Error('Internal Server Error');
+  throw new Error(error);
 };
 
 const getBooks = async () => {
@@ -26,7 +19,7 @@ const getBooks = async () => {
         return [];
       }
     } catch (error) {
-      handleError(error);
+      handleError(error.message);
     }
   };
   
@@ -34,7 +27,7 @@ const getBooks = async () => {
 const getBook = async (bookId) => {
   try {
     const doc = await booksCollection.doc(bookId).get();
-    return doc.exists ? new BookDto(doc.id,doc.title,doc.author) : null;
+    return doc.exists ? new BookDTO(doc.id,doc.title,doc.author) : null;
   } catch (error) {
     handleError(error);
   }
@@ -50,7 +43,7 @@ const createBook = async (bookData) => {
     const newDoc = await doc.get();
     return new BookDto(newDoc.id,newDoc.title,newDoc.author);
   } catch (error) {
-    handleError(error);
+    handleError(error.message);
   }
 };
 
@@ -72,7 +65,7 @@ const updateBook = async (bookId, updatedData) => {
       return null;
     }
   } catch (error) {
-    handleError(error);
+    handleError(error.message);
   }
 };
 
@@ -89,7 +82,7 @@ const deleteBook = async (bookId) => {
       return null;
     }
   } catch (error) {
-    handleError(error);
+    handleError(error.message);
   }
 };
 

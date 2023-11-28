@@ -3,29 +3,29 @@
 const booksService = require('../services/booksService');
 
 const handleError = (res, error) => {
-  res.status(500).json({ error: 'Internal Server Error' });
+  res.status(500).json({ error: error });
 };
 
 const getBooks = async (req, res) => {
   try {
-    const books = await booksService.getAllBooks();
+    const books = await booksService.getBooks();
     res.json(books);
   } catch (error) {
-    handleError(res, error);
+    handleError(res, error.message);
   }
 };
 
 const getBook = async (req, res) => {
   const bookId = req.params.id;
   try {
-    const book = await booksService.getBookById(bookId);
+    const book = await booksService.getBook(bookId);
     if (book) {
       res.json(book);
     } else {
       res.status(404).json({ error: 'Book not found' });
     }
   } catch (error) {
-    handleError(res, error);
+    handleError(res, error.message);
   }
 };
 
@@ -35,7 +35,7 @@ const createBook = async (req, res) => {
     const newBook = await booksService.createBook(bookData);
     res.status(201).json(newBook);
   } catch (error) {
-    handleError(res, error);
+    handleError(res, error.message);
   }
 };
 
@@ -50,7 +50,7 @@ const updateBook = async (req, res) => {
       res.status(404).json({ error: 'Book not found' });
     }
   } catch (error) {
-    handleError(res, error);
+    handleError(res, error.message);
   }
 };
 
@@ -64,7 +64,7 @@ const deleteBook = async (req, res) => {
       res.status(404).json({ error: 'Book not found' });
     }
   } catch (error) {
-    handleError(res, error);
+    handleError(res, error.message);
   }
 };
 
