@@ -14,7 +14,7 @@ const getBooks = async () => {
     try {
       const snapshot = await booksCollection.get();
       if (!snapshot.empty) {
-        return snapshot.docs.map((doc) => new BookDto(doc.id, doc.data().title, doc.data().author));
+        return snapshot.docs.map((doc) => new BookDto(doc.id, doc.data().title, doc.data().author,doc.data().image));
       } else {
         return [];
       }
@@ -27,7 +27,7 @@ const getBooks = async () => {
 const getBook = async (bookId) => {
   try {
     const doc = await booksCollection.doc(bookId).get();
-    return doc.exists ? new BookDTO(doc.id,doc.title,doc.author) : null;
+    return doc.exists ? new BookDTO(doc.id,doc.title,doc.author,doc.image) : null;
   } catch (error) {
     handleError(error);
   }
@@ -60,7 +60,7 @@ const updateBook = async (bookId, updatedData) => {
     if (doc.exists) {
       await docRef.update(updatedData);
       const updatedDoc = await docRef.get();
-      return new BookDto(updatedDoc.id,updatedDoc.title,updatedDoc.author);
+      return new BookDto(updatedDoc.id,updatedDoc.title,updatedDoc.author,updatedDoc.image);
     } else {
       return null;
     }
@@ -75,7 +75,7 @@ const deleteBook = async (bookId) => {
     const doc = await docRef.get();
 
     if (doc.exists) {
-      const deletedDoc = new BookDto(doc.id,doc.title,doc.author);
+      const deletedDoc = new BookDto(doc.id,doc.title,doc.author,doc.image);
       await docRef.delete();
       return deletedDoc;
     } else {
