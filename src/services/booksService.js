@@ -5,43 +5,63 @@ const BookDto = require("../dtos/bookDTO");
 
 const booksCollection = db.collection('books');
 
-const handleError = (error) => {
-  console.error(error);
-  throw new Error(error);
+const FIELD_NAMES = {
+  ID: 'id',
+  TITLE: 'title',
+  AUTHOR: 'author',
+  IMAGE: 'image',
+  SINOPSIS: 'sinopsis',
 };
 
-const getBooks = async () => {
-    try {
-      const snapshot = await booksCollection.get();
-      if (!snapshot.empty) {
-        return snapshot.docs.map((doc) => new BookDto(doc.id, doc.data().title, doc.data().author,doc.data().image));
-      } else {
-        return [];
-      }
-    } catch (error) {
-      handleError(error.message);
+const handleError = (message) => {
+  console.error(message);
+  throw { message, statusCode: 500 };
+};
+
+const validateRequiredFields = (data) => {
+  const requiredFields = [FIELD_NAMES.TITLE, FIELD_NAMES.AUTHOR];
+  for (const field of requiredFields) {
+    if (!data[field]) {
+      throw { message: `${field} is a required field`, statusCode: 400 };
     }
-  };
-  
+  }
+};
+
+const mapBookData = (doc) => {
+  return new BookDto(
+    doc.id,
+    doc.data().title,
+    doc.data().author,
+    doc.data().image,
+    doc.data().sinopsis
+  );
+};
+
+
+const getBooks = async () => {
+  try {
+    const snapshot = await booksCollection.get();
+    return snapshot.docs.map(mapBookData);
+  } catch (error) {
+    handleError(error.message);
+  }
+};
 
 const getBook = async (bookId) => {
   try {
     const doc = await booksCollection.doc(bookId).get();
-    return doc.exists ? new BookDTO(doc.id,doc.title,doc.author,doc.image) : null;
+    return doc.exists ? mapBookData(doc) : null;
   } catch (error) {
-    handleError(error);
+    handleError(error.message);
   }
 };
 
 const createBook = async (bookData) => {
   try {
-    if (!bookData.title || !bookData.author) {
-        throw { message: 'Title and author are required fields', statusCode: 400 };
-    }
-
+    validateRequiredFields(bookData);
     const doc = await booksCollection.add(bookData);
     const newDoc = await doc.get();
-    return new BookDto(newDoc.id,newDoc.title,newDoc.author);
+    return new BookDto(newDoc.id);
   } catch (error) {
     handleError(error.message);
   }
@@ -49,18 +69,14 @@ const createBook = async (bookData) => {
 
 const updateBook = async (bookId, updatedData) => {
   try {
-
-    if (!updatedData.title || !updatedData.author) {
-        throw { message: 'Title and author are required fields', statusCode: 400 };
-    }
-
+    validateRequiredFields(updatedData);
     const docRef = booksCollection.doc(bookId);
     const doc = await docRef.get();
 
     if (doc.exists) {
       await docRef.update(updatedData);
       const updatedDoc = await docRef.get();
-      return new BookDto(updatedDoc.id,updatedDoc.title,updatedDoc.author,updatedDoc.image);
+      return mapBookData(updatedDoc);
     } else {
       return null;
     }
@@ -75,7 +91,7 @@ const deleteBook = async (bookId) => {
     const doc = await docRef.get();
 
     if (doc.exists) {
-      const deletedDoc = new BookDto(doc.id,doc.title,doc.author,doc.image);
+      const deletedDoc = mapBookData(doc);
       await docRef.delete();
       return deletedDoc;
     } else {
